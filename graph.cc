@@ -1,3 +1,14 @@
+// -------------------------------------------------
+// Datastructures assignment 2
+// Authors: Liya Charlaganova, Wouter Remmerswaal
+// -------------------------------------------------
+//
+// Main function used to run the program. Run with option 'd' for debug mode
+// (menu will not be printed).
+// This program will take in an expression and can simplify it, evaluate it,
+// differentiate it and save it to a .dot file. Expression must be in prefix
+// notation.
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -8,7 +19,6 @@
 #include "basic.h"
 
 using namespace std;
-
 
 
 int main(int argc, char** argv){

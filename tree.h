@@ -1,3 +1,11 @@
+// -------------------------------------------------
+// Datastructures assignment 2
+// Authors: Liya Charlaganova, Wouter Remmerswaal
+// -------------------------------------------------
+//
+// This files contains the expression class 'Tree'. This class stores
+// the tree and contains all functions to manipulate it.
+
 #ifndef TREE_H
 #define TREE_H
 
@@ -12,13 +20,13 @@
 using namespace std;
 
 
-
-// Class that stores the expression tree.
+// Class that stores the expression tree and its operations.
 class Tree{
     Node* root;
     bool bracketed;     // stores if the current expression part
-                        // is already bracketed, see 'print_tree()'.
-    bool tree_impossible;
+                        // is already bracketed, see 'print_tree()'
+    bool tree_impossible;   // true if input expression is not a
+                            // possible tree
 
     public:
         Tree();
@@ -46,6 +54,7 @@ Tree::~Tree(){
     root = nullptr;
 }
 
+// Deletes the tree starting at node 'n'.
 void Tree::delete_node(Node* n){
     if (n -> left != nullptr){
         delete_node(n -> left);
@@ -57,6 +66,8 @@ void Tree::delete_node(Node* n){
     n = nullptr;
 }
 
+
+// Delete entire tree.
 void Tree::delete_tree(){
     if (root != nullptr){
         delete_node(root);
@@ -92,7 +103,7 @@ void Tree::print_dot(Node*n, int &count, string filename){
     int rememberCount;
     if(n->left != nullptr){
         out.open(filename, ios_base::app);
-        out << "\t" + to_string(count) + " [label=\"" + n->left->str_rep + "\"] \n";
+        out << "\t" + to_string(count) + " [label=\"" + n->left->get_str() + "\"] \n";
         out << "\t" + to_string(count-1) + "->" + to_string(count) + "\n";
         out.close();
         rememberCount = count;
@@ -106,7 +117,7 @@ void Tree::print_dot(Node*n, int &count, string filename){
                 n -> print_node();
 
         out.open(filename, ios_base::app);
-        out << "\t" + to_string(count) + " [label=\"" + n->right->str_rep + "\"] \n";
+        out << "\t" + to_string(count) + " [label=\"" + n->right->get_str() + "\"] \n";
         out << "\t" + to_string(rememberCount-1) + "->" + to_string(count) + "\n";
         out.close();
         n = n->right;
@@ -136,7 +147,7 @@ void Tree::diff(Node* n){
             delete_node(help);
         }
     }
-    else if(n->str_rep=="cos"){
+    else if(n->get_str()=="cos"){
         help = new Node("*");
         help->left = new Node("*");
         help->left->left = new Node("-1");
@@ -148,7 +159,7 @@ void Tree::diff(Node* n){
         n = help;
         delete_node(help);
     }
-    else if(n->str_rep=="sin"){
+    else if(n->get_str()=="sin"){
         help = new Node("*");
         help->right = new Node("cos");
         help->right->left = n->left;
@@ -162,11 +173,11 @@ void Tree::diff(Node* n){
         if(n->is_power()){
             if(n->right->is_value()&&!n->right->is_x()){
                 help = new Node("*");
-                help->left = new Node(n->right->str_rep);
+                help->left = new Node(n->right->get_str());
                 help->right = n;
                 delete_node(help->right->right);
                 help->right->right = new Node("-");
-                help->right->right->left = new Node(n->right->str_rep);
+                help->right->right->left = new Node(n->right->get_str());
                 help->right->right->left = new Node("1");
                 delete_node(n);
                 n = help;
@@ -274,10 +285,6 @@ void Tree::read(){
 }
 
 Node* Tree::simp(Node* n){
-    // cout << "TESTING" << endl;
-    // n -> left -> print_node();
-    // cout << "\nEND" << endl;
-
     if ( !(n -> left -> is_value() ) ) {    // left node is not a leaf,
                                             // find leaf
         n -> left = simp(n -> left);
@@ -291,13 +298,8 @@ Node* Tree::simp(Node* n){
         return n;
     }
 
+    // Simplification of tree if left leaf is 0.
     if (n -> left -> is_zero()){
-        // cout << "LEFT IS ZERO\n";
-        // n -> left -> print_node();
-        // cout << endl;
-        // n -> right -> print_node();
-        // cout << "\nend" << endl;
-
         if ( ! (n -> is_addmin()) ){    // result is 0
             delete_node(n -> left);
             delete_node(n -> right);
@@ -310,6 +312,7 @@ Node* Tree::simp(Node* n){
         return n;
     }
 
+    // Simplification of tree if left leaf is 1.
     else if (n -> left -> is_one()){
         if (n -> left -> is_times()){            // result is the right node
             delete_node(n -> left);
@@ -328,6 +331,7 @@ Node* Tree::simp(Node* n){
         n -> right = simp(n -> right);
     }
 
+    // Simplification of tree if right leaf is 0.
     if (n -> right -> is_zero()){
         if (n -> is_addmin()){
             delete_node(n -> right);
@@ -339,10 +343,11 @@ Node* Tree::simp(Node* n){
             if (n -> is_power() ) { n -> set_one(); }
             else { n -> set_zero(); }
         }
-        return n;
-        // if operator is division, nothing is calculated
+        return n;   // if operator is division, nothing is calculated,
+                    // division by 0 is kept in expression
     }
 
+    // Simplification of tree if right leaf is 1.
     else if (n -> right -> is_one()){
         if ( !(n -> is_addmin()) ){
             delete_node(n -> right);
@@ -363,6 +368,8 @@ Node* Tree::simp(Node* n){
     return n;
 }
 
+// Evaluate the expression starting at node 'n': replace
+// all instances of variable "x" in the tree with the double 'x'.
 void Tree::eval(Node* n, double x){
     if (n -> is_value()){
         if (n -> is_x()){
@@ -400,7 +407,7 @@ bool Tree::menu(string in){
         cin.ignore();
         getline(cin, filename);
         ofstream out(filename);
-        out << "digraph G {\n\t1 [label=\"" + root->str_rep + "\"] \n";
+        out << "digraph G {\n\t1 [label=\"" + root->get_str() + "\"] \n";
         out.close();
         print_dot(root, count, filename);
         out.open(filename, ios_base::app);
