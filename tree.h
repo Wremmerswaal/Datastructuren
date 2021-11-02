@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <math.h>
 #include "node.h"
 #include "basic.h"
 
@@ -28,8 +29,9 @@ class Tree{
         void delete_tree();
         void print_dot(Node*n, int &count, string filename);
         bool menu(string in);
-        void diff(Node* n);
         void print_tree(Node* n);
+        void diff(Node* n);
+        Node* simp(Node* n);
 };
 
 Tree::Tree(){
@@ -84,7 +86,8 @@ Node* Tree::make_tree(istringstream &is){
 // Write the expression in DOT expression to 'filename'.
 void Tree::print_dot(Node*n, int &count, string filename){
     ofstream out;
-    Node* remember = new Node;
+    // Node* remember = new Node;
+    Node* remember;
     int rememberCount;
     if(n->left != nullptr){
         out.open(filename, ios_base::app);
@@ -110,64 +113,6 @@ void Tree::print_dot(Node*n, int &count, string filename){
         print_dot(n, count, filename);
     }
     return;
-}
-// Print the tree infix with minimal brackets (recursively).
-void Tree::print_tree(Node*n){
-    if (n == nullptr){
-        return;
-    }
-    if (n -> is_trig() ) {                          // sin and cos are always
-                                                    // in brackets
-        n -> print_node();
-        bracketed = true;
-        cout << "(";
-        print_tree(n -> left);
-        cout << ")";
-    }
-    else{
-        if ( n -> needs_brackets() && !bracketed){  // plus or minus
-            cout << "(";
-            print_tree(n -> left);
-            n -> print_node();
-            print_tree(n -> right);
-            cout << ")";
-        }
-        else if (n -> is_div()) {                   // division node
-            cout << "(";
-            bracketed = true;
-            print_tree(n -> left);
-            cout << ")";
-            n -> print_node();
-            cout << "(";
-            bracketed = true;
-            print_tree(n -> right);
-            cout << ")";
-        }
-        else {                          // binary operator node,
-                                        // or the current expression is already
-                                        // in brackets
-            print_tree(n -> left);
-            n -> print_node();
-            print_tree(n -> right);
-        }
-    }
-    bracketed = false;
-}
-
-// Gets the line for the expression and makes the tree.
-void Tree::read(){
-    string line;
-    string str;
-    getline(cin, line);
-    
-    istringstream is(line);
-
-    delete_tree();
-
-    root = make_tree(is);
-    if (tree_impossible || (is >> str)){
-        delete_tree();
-    }
 }
 
 // Differentiates the current tree
@@ -267,6 +212,153 @@ void Tree::diff(Node* n){
     }
 }
 
+// Print the tree infix with minimal brackets (recursively).
+void Tree::print_tree(Node*n){
+    if (n == nullptr){
+        return;
+    }
+
+// TODO 
+    // cout << "IN PRINT" << endl;
+    // n -> print_node();
+    // cout << "\n END" << endl;
+
+    if (n -> is_trig() ) {                          // sin and cos are always
+                                                    // in brackets
+        n -> print_node();
+        bracketed = true;
+        cout << "(";
+        print_tree(n -> left);
+        cout << ")";
+    }
+    else{
+        if ( n -> needs_brackets() && !bracketed){  // plus or minus
+            cout << "(";
+            print_tree(n -> left);
+            n -> print_node();
+            print_tree(n -> right);
+            cout << ")";
+        }
+        else if (n -> is_div()) {                   // division node
+            cout << "(";
+            bracketed = true;
+            print_tree(n -> left);
+            cout << ")";
+            n -> print_node();
+            cout << "(";
+            bracketed = true;
+            print_tree(n -> right);
+            cout << ")";
+        }
+        else {                          // binary operator node,
+                                        // or the current expression is already
+                                        // in brackets
+            print_tree(n -> left);
+            n -> print_node();
+            print_tree(n -> right);
+        }
+    }
+    bracketed = false;
+}
+
+// Gets the line for the expression and makes the tree.
+void Tree::read(){
+    string line;
+    string str;
+    getline(cin, line);
+    
+    istringstream is(line);
+
+    delete_tree();
+
+    root = make_tree(is);
+    if (tree_impossible || (is >> str)){
+        delete_tree();
+    }
+}
+
+Node* Tree::simp(Node* n){
+    // cout << "TESTING" << endl;
+    // n -> left -> print_node();
+    // cout << "\nEND" << endl;
+
+    if ( !(n -> left -> is_value() ) ) {    // left node is not a leaf,
+                                            // find leaf
+        n -> left = simp(n -> left);
+    }
+
+    if (n -> is_trig()) {               // if the node is a trigonometric function,
+                                        // it can immediately be simplified
+        if (n -> left -> is_number()){
+            n -> calc_trig();
+        }
+        return n;
+    }
+
+    if (n -> left -> is_zero()){
+        if ( ! (n -> left -> is_addmin()) ){    // result is 0
+            delete_node(n -> left);
+            delete_node(n -> right);
+            n -> set_zero();
+        }
+        else {                                  // result is the right node
+            delete_node(n -> left);
+            n = n -> right;
+        }
+        return n;
+    }
+
+    else if (n -> left -> is_one()){
+        if (n -> left -> is_times()){            // result is the right node
+            delete_node(n -> left);
+            n = n -> right;
+        }
+        else if (n -> left -> is_power()){        // result is 1
+            delete_node(n -> right);
+            delete_node(n -> left);
+            n -> set_one();
+        }
+        return n;
+    }
+
+    if ( !(n -> right -> is_value() ) ) {
+        n -> right = simp(n -> right);
+    }
+
+    // TODO
+    // cout << "AA" << endl;
+    // n -> right -> print_node();
+    // cout << '\n' << n -> right -> is_zero() << endl;
+    // cout << "\nEND AA" << endl;
+
+    if (n -> right -> is_zero()){
+        if (n -> is_addmin()){
+            delete_node(n -> right);
+            n = n -> left;
+        }
+        else if ( (n -> is_power()) | n -> is_times()){
+            delete_node(n -> left);
+            delete_node(n -> right);
+            if (n -> is_power() ) { n -> set_one(); }
+            else { n -> set_zero(); }
+        }
+        // if operator is division, nothing is calculated
+    }
+
+    else if (n -> right -> is_one()){
+        if ( !(n -> is_addmin()) ){
+            delete_node(n -> right);
+            n = n -> left;
+            return n;
+        }
+    }
+
+    else if (n -> left -> is_number() && n -> right -> is_number()){
+        n -> calc_binary();
+    }
+    return n;
+}
+
 // Takes an input string and converts to a command,
 // return true if the command is 'end'. Otherwise return false.
 bool Tree::menu(string in){
@@ -275,6 +367,13 @@ bool Tree::menu(string in){
         return 0;
     }
     else if (in == "print"){
+        // TODO
+        // cout << "IN PRINT" << endl;
+        // root -> print_node();
+        // cout << "\n" << root -> left;
+        // cout << "\nEND" << endl;
+
+        bracketed = true;
         print_tree(root);
         cout << endl;
         return 0;
@@ -297,17 +396,30 @@ bool Tree::menu(string in){
         out.close();
         return 0;
     }
+    else if(in == "simp"){
+        if ( (root == nullptr) | (root -> is_value()) | 
+             (root -> is_unknown() ) ){
+            return 0;
+        }
+        else {
+            root = simp(root);
+            // cout << "AFTER SIMP" << endl; TODO
+            // root -> print_node();
+            // cout << "\nEND" << endl;
+            return 0;
+        }
+    }
+    
+    else if(in == "diff"){
+        diff(root);
+        cout << endl;
+        return 0;
+    }
 
     else if(in == "end"){
         delete_tree();
         return 1;
     }
-
-    else if(in == "diff"){
-        diff(root);
-        cout << endl;
-        return 0;
-    } 
     else {
         return 0;
     }
