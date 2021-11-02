@@ -28,6 +28,7 @@ class Tree{
         void delete_tree();
         void print_dot(Node*n, int &count, string filename);
         bool menu(string in);
+        void diff(Node* n);
         void print_tree(Node* n);
 };
 
@@ -301,6 +302,12 @@ bool Tree::menu(string in){
         delete_tree();
         return 1;
     }
+
+    else if(in == "diff"){
+        diff(root);
+        cout << endl;
+        return 0;
+    } 
     else {
         return 0;
     }
