@@ -323,9 +323,6 @@ Node* Tree::simp(Node* n){
 
     if ( !(n -> right -> is_value() ) ) {
         n -> right = simp(n -> right);
-        cout << "ets" << ' ';
-        n -> right -> print_node();
-        cout << "\n end" << endl;
     }
 
     // TODO
