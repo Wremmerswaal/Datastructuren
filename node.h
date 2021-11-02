@@ -24,16 +24,20 @@ class Node{
     public:
         Node();
         Node(string str);
-        // ~Node();
+
+        bool x;
+        bool is_x();
+
         bool is_value();
         bool is_number();
+        
         bool is_zero();
         bool is_one();
         bool is_binary_op();
         bool is_trig();
         bool is_div();
-        bool is_mult();
-        bool is_pow();
+        bool is_times();
+        bool is_power();
         bool is_addmin();
         bool is_unknown();
         bool needs_brackets();
@@ -56,6 +60,7 @@ class Node{
 Node::Node(){
     left = nullptr;
     right = nullptr;
+    x = false;
 }
 
 // Constructor which identifies the type of the node
@@ -63,6 +68,7 @@ Node::Node(){
 Node::Node(string str){
     left = nullptr;
     right = nullptr;
+    x = false;
 
     str_rep = str;
     if (str == "-") {oper = MINUS;}
@@ -73,10 +79,20 @@ Node::Node(string str){
     else if (str == "sin") {oper = SIN;}
     else if (str == "cos") {oper = COS;}
     else if (str == "pi") {oper = NUM; var.number = pi;}
-    else if (all_alpha(str)) {oper = VAR; var.variable = str[0];}
+    else if (all_alpha(str)) {
+        oper = VAR; 
+        var.variable = str[0];
+        if(str == "x"){
+            x = true;
+        }
+    }
     else if (all_digits(str)) {oper = NUM; var.number = stod(str);}
     else {oper = UNKNOWN; str_rep = '?';}       // used for bad input,
                                                 // treated as variable
+}
+
+bool Node::is_x(){
+    return (x);
 }
 
 // Check whether the node is a variable or number.
@@ -98,7 +114,7 @@ bool Node::is_one(){
 
 // Check whether the node is a binary operator (+, -, x, /, ^).
 bool Node::is_binary_op(){
-    return ( (oper != NUM) && (oper!=VAR) &&
+    return ( !is_value() &&
              !is_trig() && (oper != UNKNOWN));
 }
 
@@ -117,11 +133,11 @@ bool Node::is_div(){
     return (oper == DIVIDE);
 }
 
-bool Node::is_mult(){
+bool Node::is_times(){
     return (oper == MULTIPLY);
 }
 
-bool Node::is_pow(){
+bool Node::is_power(){
     return (oper == POWER);
 }
 

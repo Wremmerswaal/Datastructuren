@@ -30,6 +30,7 @@ class Tree{
         void print_dot(Node*n, int &count, string filename);
         bool menu(string in);
         void print_tree(Node* n);
+        void diff(Node* n);
         Node* simp(Node* n);
 };
 
@@ -52,6 +53,7 @@ void Tree::delete_node(Node* n){
         delete_node(n -> right);
     }
     delete n;
+    n = nullptr;
 }
 
 void Tree::delete_tree(){
@@ -112,6 +114,104 @@ void Tree::print_dot(Node*n, int &count, string filename){
     }
     return;
 }
+
+// Differentiates the current tree
+void Tree::diff(Node* n){
+    if(n==nullptr){
+        return;
+    }
+    Node* help;
+    if(n->is_value()){
+        if(n->is_x()){
+            help = new Node("1");
+            delete_node(n);
+            n = help;
+            delete_node(help);
+        }
+        else{
+            help = new Node("0");
+            delete_node(n);
+            n = help;
+            delete_node(help);
+        }
+    }
+    else if(n->str_rep=="cos"){
+        help = new Node("*");
+        help->left = new Node("*");
+        help->left->left = new Node("-1");
+        help->right = new Node("sin");
+        help->right->left = n->left;
+        diff(n->left);
+        help->left->right = n->left;
+        delete_node(n);
+        n = help;
+        delete_node(help);
+    }
+    else if(n->str_rep=="sin"){
+        help = new Node("*");
+        help->right = new Node("cos");
+        help->right->left = n->left;
+        diff(n->left);
+        help->left = n->left;
+        delete_node(n);
+        n = help;
+        delete_node(help);
+    }
+    else if(n->is_binary_op()){
+        if(n->is_power()){
+            if(n->right->is_value()&&!n->right->is_x()){
+                help = new Node("*");
+                help->left = new Node(n->right->str_rep);
+                help->right = n;
+                delete_node(help->right->right);
+                help->right->right = new Node("-");
+                help->right->right->left = new Node(n->right->str_rep);
+                help->right->right->left = new Node("1");
+                delete_node(n);
+                n = help;
+                delete_node(help);
+            }
+        }
+        if(n->is_add()){
+            diff(n->left);
+            diff(n->right);
+        }
+        if(n->is_times()){
+            help = new Node("+");
+            help->left = new Node("*");
+            help->right = new Node("*");
+            help->left->right = n->right;
+            help->right->left = n->left;
+            diff(n->left);
+            diff(n->right);
+            help->left->left = n->left;
+            help->right->right = n->right;
+            delete_node(n);
+            n = help;
+            delete_node(help);
+        }
+        if(n->is_div()){
+            help = new Node("/");
+            help->right = new Node("*");
+            help->right->left = n->right;
+            help->right->right = n->right;
+            
+            help->left = new Node("-");
+            help->left->left = new Node("*");
+            help->left->right = new Node("*");
+            help->left->left->right = n->right;
+            help->left->right->left = n->left;
+            diff(n->left);
+            diff(n->right);
+            help->left->left->left = n->left;
+            help->left->right->right = n->right;
+            delete_node(n);
+            n = help;
+            delete_node(help);
+        }
+    }
+}
+
 // Print the tree infix with minimal brackets (recursively).
 void Tree::print_tree(Node*n){
     if (n == nullptr){
@@ -209,11 +309,11 @@ Node* Tree::simp(Node* n){
     }
 
     else if (n -> left -> is_one()){
-        if (n -> left -> is_mult()){            // result is the right node
+        if (n -> left -> is_times()){            // result is the right node
             delete_node(n -> left);
             n = n -> right;
         }
-        else if (n -> left -> is_pow()){        // result is 1
+        else if (n -> left -> is_power()){        // result is 1
             delete_node(n -> right);
             delete_node(n -> left);
             n -> set_one();
@@ -239,10 +339,10 @@ Node* Tree::simp(Node* n){
             delete_node(n -> right);
             n = n -> left;
         }
-        else if ( (n -> is_pow()) | n -> is_mult()){
+        else if ( (n -> is_power()) | n -> is_times()){
             delete_node(n -> left);
             delete_node(n -> right);
-            if (n -> is_pow() ) { n -> set_one(); }
+            if (n -> is_power() ) { n -> set_one(); }
             else { n -> set_zero(); }
         }
         // if operator is division, nothing is calculated
@@ -311,6 +411,12 @@ bool Tree::menu(string in){
             // cout << "\nEND" << endl;
             return 0;
         }
+    }
+    
+    else if(in == "diff"){
+        diff(root);
+        cout << endl;
+        return 0;
     }
 
     else if(in == "end"){

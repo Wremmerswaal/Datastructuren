@@ -43,6 +43,7 @@ int main(int argc, char** argv){
             cout << "'dot' <file> to write the expression in DOT";
             cout << " notation to 'file'." << endl;
             cout << "'simp' to simplify expression" << endl;
+            cout << "'diff' to differentiate the expression" << endl;
             cout << "'end' to exit the program" << endl;
             cout << endl;
             
