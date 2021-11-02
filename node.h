@@ -39,6 +39,7 @@ class Node{
         bool is_times();
         bool is_power();
         bool is_addmin();
+        bool is_add();
         bool is_unknown();
         bool needs_brackets();
         void print_node();
@@ -143,6 +144,10 @@ bool Node::is_power(){
 
 bool Node::is_addmin(){
     return ((oper == PLUS) | (oper == MINUS));
+}
+
+bool Node::is_add(){
+    return (oper == PLUS);
 }
 
 // Check whether the operator needs brackets (plus or minus)
