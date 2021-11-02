@@ -2,12 +2,12 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <math.h>
 #include "node.h"
 #include "tree.h"
 #include "basic.h"
 
 using namespace std;
-
 
 
 
@@ -42,7 +42,7 @@ int main(int argc, char** argv){
                  << endl;
             cout << "'dot' <file> to write the expression in DOT";
             cout << " notation to 'file'." << endl;
-            cout << "'diff' to differentiate the expression" << endl;
+            cout << "'simp' to simplify expression" << endl;
             cout << "'end' to exit the program" << endl;
             cout << endl;
             

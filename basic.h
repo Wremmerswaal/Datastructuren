@@ -5,11 +5,15 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <math.h>
 
 using namespace std;
 
+const double pi = 3.14159;
+const double MinVal = 0.00001;
+
 // Check if the string only contains letters.
-bool is_alpha(string str){
+bool all_alpha(string str){
     int i=0;
     while(str[i]){
         if (!isalpha(str[i])){
@@ -21,7 +25,7 @@ bool is_alpha(string str){
 }
 
 // Check if input is a positive or negative number (double).
-bool is_number(string str){
+bool all_digits(string str){
     bool dot = false;
     int i=0;
     if (str[i] == '-'){

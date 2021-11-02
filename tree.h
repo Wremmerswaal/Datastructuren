@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <math.h>
 #include "node.h"
 #include "basic.h"
 
@@ -28,8 +29,8 @@ class Tree{
         void delete_tree();
         void print_dot(Node*n, int &count, string filename);
         bool menu(string in);
-        void diff(Node* n);
         void print_tree(Node* n);
+        Node* simp(Node* n);
 };
 
 Tree::Tree(){
@@ -51,7 +52,6 @@ void Tree::delete_node(Node* n){
         delete_node(n -> right);
     }
     delete n;
-    n = nullptr;
 }
 
 void Tree::delete_tree(){
@@ -84,7 +84,8 @@ Node* Tree::make_tree(istringstream &is){
 // Write the expression in DOT expression to 'filename'.
 void Tree::print_dot(Node*n, int &count, string filename){
     ofstream out;
-    Node* remember = new Node;
+    // Node* remember = new Node;
+    Node* remember;
     int rememberCount;
     if(n->left != nullptr){
         out.open(filename, ios_base::app);
@@ -116,6 +117,12 @@ void Tree::print_tree(Node*n){
     if (n == nullptr){
         return;
     }
+
+// TODO 
+    // cout << "IN PRINT" << endl;
+    // n -> print_node();
+    // cout << "\n END" << endl;
+
     if (n -> is_trig() ) {                          // sin and cos are always
                                                     // in brackets
         n -> print_node();
@@ -170,101 +177,89 @@ void Tree::read(){
     }
 }
 
-// Differentiates the current tree
-void Tree::diff(Node* n){
-    if(n==nullptr){
-        return;
+Node* Tree::simp(Node* n){
+    // cout << "TESTING" << endl;
+    // n -> left -> print_node();
+    // cout << "\nEND" << endl;
+
+    if ( !(n -> left -> is_value() ) ) {    // left node is not a leaf,
+                                            // find leaf
+        n -> left = simp(n -> left);
     }
-    Node* help;
-    if(n->is_value()){
-        if(n->is_x()){
-            help = new Node("1");
-            delete_node(n);
-            n = help;
-            delete_node(help);
+
+    if (n -> is_trig()) {               // if the node is a trigonometric function,
+                                        // it can immediately be simplified
+        if (n -> left -> is_number()){
+            n -> calc_trig();
         }
-        else{
-            help = new Node("0");
-            delete_node(n);
-            n = help;
-            delete_node(help);
-        }
+        return n;
     }
-    else if(n->str_rep=="cos"){
-        help = new Node("*");
-        help->left = new Node("*");
-        help->left->left = new Node("-1");
-        help->right = new Node("sin");
-        help->right->left = n->left;
-        diff(n->left);
-        help->left->right = n->left;
-        delete_node(n);
-        n = help;
-        delete_node(help);
+
+    if (n -> left -> is_zero()){
+        if ( ! (n -> left -> is_addmin()) ){    // result is 0
+            delete_node(n -> left);
+            delete_node(n -> right);
+            n -> set_zero();
+        }
+        else {                                  // result is the right node
+            delete_node(n -> left);
+            n = n -> right;
+        }
+        return n;
     }
-    else if(n->str_rep=="sin"){
-        help = new Node("*");
-        help->right = new Node("cos");
-        help->right->left = n->left;
-        diff(n->left);
-        help->left = n->left;
-        delete_node(n);
-        n = help;
-        delete_node(help);
+
+    else if (n -> left -> is_one()){
+        if (n -> left -> is_mult()){            // result is the right node
+            delete_node(n -> left);
+            n = n -> right;
+        }
+        else if (n -> left -> is_pow()){        // result is 1
+            delete_node(n -> right);
+            delete_node(n -> left);
+            n -> set_one();
+        }
+        return n;
     }
-    else if(n->is_binary_op()){
-        if(n->is_power()){
-            if(n->right->is_value()&&!n->right->is_x()){
-                help = new Node("*");
-                help->left = new Node(n->right->str_rep);
-                help->right = n;
-                delete_node(help->right->right);
-                help->right->right = new Node("-");
-                help->right->right->left = new Node(n->right->str_rep);
-                help->right->right->left = new Node("1");
-                delete_node(n);
-                n = help;
-                delete_node(help);
-            }
+
+    if ( !(n -> right -> is_value() ) ) {
+        n -> right = simp(n -> right);
+        cout << "ets" << ' ';
+        n -> right -> print_node();
+        cout << "\n end" << endl;
+    }
+
+    // TODO
+    // cout << "AA" << endl;
+    // n -> right -> print_node();
+    // cout << '\n' << n -> right -> is_zero() << endl;
+    // cout << "\nEND AA" << endl;
+
+    if (n -> right -> is_zero()){
+        if (n -> is_addmin()){
+            delete_node(n -> right);
+            n = n -> left;
         }
-        if(n->is_add()){
-            diff(n->left);
-            diff(n->right);
+        else if ( (n -> is_pow()) | n -> is_mult()){
+            delete_node(n -> left);
+            delete_node(n -> right);
+            if (n -> is_pow() ) { n -> set_one(); }
+            else { n -> set_zero(); }
         }
-        if(n->is_times()){
-            help = new Node("+");
-            help->left = new Node("*");
-            help->right = new Node("*");
-            help->left->right = n->right;
-            help->right->left = n->left;
-            diff(n->left);
-            diff(n->right);
-            help->left->left = n->left;
-            help->right->right = n->right;
-            delete_node(n);
-            n = help;
-            delete_node(help);
-        }
-        if(n->is_div()){
-            help = new Node("/");
-            help->right = new Node("*");
-            help->right->left = n->right;
-            help->right->right = n->right;
-            
-            help->left = new Node("-");
-            help->left->left = new Node("*");
-            help->left->right = new Node("*");
-            help->left->left->right = n->right;
-            help->left->right->left = n->left;
-            diff(n->left);
-            diff(n->right);
-            help->left->left->left = n->left;
-            help->left->right->right = n->right;
-            delete_node(n);
-            n = help;
-            delete_node(help);
+        // if operator is division, nothing is calculated
+    }
+
+    else if (n -> right -> is_one()){
+        if ( !(n -> is_addmin()) ){
+            delete_node(n -> right);
+            n = n -> left;
+            return n;
         }
     }
+
+    else if (n -> left -> is_number() && n -> right -> is_number()){
+        n -> calc_binary();
+    }
+    return n;
 }
 
 // Takes an input string and converts to a command,
@@ -275,6 +270,13 @@ bool Tree::menu(string in){
         return 0;
     }
     else if (in == "print"){
+        // TODO
+        // cout << "IN PRINT" << endl;
+        // root -> print_node();
+        // cout << "\n" << root -> left;
+        // cout << "\nEND" << endl;
+
+        bracketed = true;
         print_tree(root);
         cout << endl;
         return 0;
@@ -297,17 +299,24 @@ bool Tree::menu(string in){
         out.close();
         return 0;
     }
+    else if(in == "simp"){
+        if ( (root == nullptr) | (root -> is_value()) | 
+             (root -> is_unknown() ) ){
+            return 0;
+        }
+        else {
+            root = simp(root);
+            // cout << "AFTER SIMP" << endl; TODO
+            // root -> print_node();
+            // cout << "\nEND" << endl;
+            return 0;
+        }
+    }
 
     else if(in == "end"){
         delete_tree();
         return 1;
     }
-
-    else if(in == "diff"){
-        diff(root);
-        cout << endl;
-        return 0;
-    } 
     else {
         return 0;
     }
