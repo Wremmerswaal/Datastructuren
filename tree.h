@@ -32,6 +32,7 @@ class Tree{
         void print_tree(Node* n);
         void diff(Node* n);
         Node* simp(Node* n);
+        void eval(Node* n, double x);
 };
 
 Tree::Tree(){
@@ -218,11 +219,6 @@ void Tree::print_tree(Node*n){
         return;
     }
 
-// TODO 
-    // cout << "IN PRINT" << endl;
-    // n -> print_node();
-    // cout << "\n END" << endl;
-
     if (n -> is_trig() ) {                          // sin and cos are always
                                                     // in brackets
         n -> print_node();
@@ -318,24 +314,19 @@ Node* Tree::simp(Node* n){
         if (n -> left -> is_times()){            // result is the right node
             delete_node(n -> left);
             n = n -> right;
+            return n;
         }
         else if (n -> left -> is_power()){        // result is 1
             delete_node(n -> right);
             delete_node(n -> left);
             n -> set_one();
+            return n;
         }
-        return n;
     }
 
     if ( !(n -> right -> is_value() ) ) {
         n -> right = simp(n -> right);
     }
-
-    // TODO
-    // cout << "AA" << endl;
-    // n -> right -> print_node();
-    // cout << '\n' << n -> right -> is_zero() << endl;
-    // cout << "\nEND AA" << endl;
 
     if (n -> right -> is_zero()){
         if (n -> is_addmin()){
@@ -348,6 +339,7 @@ Node* Tree::simp(Node* n){
             if (n -> is_power() ) { n -> set_one(); }
             else { n -> set_zero(); }
         }
+        return n;
         // if operator is division, nothing is calculated
     }
 
@@ -359,7 +351,7 @@ Node* Tree::simp(Node* n){
         }
     }
 
-    else if (n -> left -> is_number() && n -> right -> is_number()){
+    if (n -> left -> is_number() && n -> right -> is_number()){
         n -> calc_binary();
     }
     else if (n -> left -> is_var() && n -> right -> is_var()){
@@ -371,20 +363,28 @@ Node* Tree::simp(Node* n){
     return n;
 }
 
+void Tree::eval(Node* n, double x){
+    if (n -> is_value()){
+        if (n -> is_x()){
+            n -> replace_x(x);
+            return;
+        }
+    }
+    if (n -> left != nullptr) {eval(n -> left, x);}
+    if (n -> right != nullptr) {eval(n -> right, x);}
+}
+
 // Takes an input string and converts to a command,
 // return true if the command is 'end'. Otherwise return false.
 bool Tree::menu(string in){
+    string x_str;
+    double x;
+
     if (in == "exp"){
         read();
         return 0;
     }
     else if (in == "print"){
-        // TODO
-        // cout << "IN PRINT" << endl;
-        // root -> print_node();
-        // cout << "\n" << root -> left;
-        // cout << "\nEND" << endl;
-
         bracketed = true;
         print_tree(root);
         cout << endl;
@@ -415,9 +415,6 @@ bool Tree::menu(string in){
         }
         else {
             root = simp(root);
-            // cout << "AFTER SIMP" << endl; TODO
-            // root -> print_node();
-            // cout << "\nEND" << endl;
             return 0;
         }
     }
@@ -425,6 +422,16 @@ bool Tree::menu(string in){
     else if(in == "diff"){
         diff(root);
         cout << endl;
+        return 0;
+    }
+
+    else if(in == "eval"){
+        cin >> x_str;
+        if (all_digits(x_str)){
+            x = stod(x_str);
+            eval(root, x);
+            simp(root);
+        }
         return 0;
     }
 

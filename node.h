@@ -27,6 +27,7 @@ class Node{
 
         bool x;
         bool is_x();
+        void replace_x(double x);
 
         bool is_value();
         bool is_number();
@@ -97,6 +98,13 @@ Node::Node(string str){
 
 bool Node::is_x(){
     return (x);
+}
+
+void Node::replace_x(double x){
+    oper = NUM;
+    var.variable = ' ';
+    var.number = x;
+    str_rep = to_string(x);
 }
 
 // Check whether the node is a variable or number.
@@ -201,10 +209,6 @@ void Node::calc_trig(){
 
     delete left;
     left = nullptr;
-
-    // cout << "INTERNAL" << endl; TODO
-    // print_node();
-    // cout << "\nEND" << endl;
 }
 
 void Node::calc_binary(){
@@ -219,9 +223,6 @@ void Node::calc_binary(){
     left = nullptr; right = nullptr;
     oper = NUM;
     str_rep = to_string(var.number);
-
-    // TODO: add for -: x - x = 0
-    // add for / : x / x = 1
 }
 
 bool Node::same_vars(){
