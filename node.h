@@ -30,6 +30,7 @@ class Node{
 
         bool is_value();
         bool is_number();
+        bool is_var();
         
         bool is_zero();
         bool is_one();
@@ -48,6 +49,8 @@ class Node{
         void set_one();
         void calc_trig();
         void calc_binary();
+        void calc_vars();
+        bool same_vars();
 
         Node* left;
         Node* right;
@@ -99,6 +102,10 @@ bool Node::is_x(){
 // Check whether the node is a variable or number.
 bool Node::is_value(){
     return ( (oper == VAR) | (oper == NUM) );
+}
+
+bool Node::is_var(){
+    return (oper == VAR);
 }
 
 bool Node::is_number(){
@@ -216,5 +223,19 @@ void Node::calc_binary(){
     // TODO: add for -: x - x = 0
     // add for / : x / x = 1
 }
+
+bool Node::same_vars(){
+    return  (left -> var.variable == right -> var.variable);
+}
+
+void Node::calc_vars(){
+    if (oper == MINUS){
+        set_zero();
+    }
+    else if (oper == DIVIDE){
+        set_one();
+    }
+}
+
 
 #endif

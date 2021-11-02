@@ -296,7 +296,13 @@ Node* Tree::simp(Node* n){
     }
 
     if (n -> left -> is_zero()){
-        if ( ! (n -> left -> is_addmin()) ){    // result is 0
+        // cout << "LEFT IS ZERO\n";
+        // n -> left -> print_node();
+        // cout << endl;
+        // n -> right -> print_node();
+        // cout << "\nend" << endl;
+
+        if ( ! (n -> is_addmin()) ){    // result is 0
             delete_node(n -> left);
             delete_node(n -> right);
             n -> set_zero();
@@ -355,6 +361,12 @@ Node* Tree::simp(Node* n){
 
     else if (n -> left -> is_number() && n -> right -> is_number()){
         n -> calc_binary();
+    }
+    else if (n -> left -> is_var() && n -> right -> is_var()){
+        if (n -> same_vars() ){
+            delete_node(n -> left); delete_node(n -> right);
+            n -> calc_vars();
+        }
     }
     return n;
 }
