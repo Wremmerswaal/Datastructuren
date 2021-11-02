@@ -169,6 +169,102 @@ void Tree::read(){
     }
 }
 
+// Differentiates the current tree
+void Tree::diff(Node* n){
+    if(n==nullptr){
+        return;
+    }
+    Node* help;
+    if(n->is_value()){
+        if(n->is_x()){
+            help = new Node("1");
+            delete_node(n);
+            n = help;
+            delete_node(help);
+        }
+        else{
+            help = new Node("0");
+            delete_node(n);
+            n = help;
+            delete_node(help);
+        }
+    }
+    else if(n->str_rep=="cos"){
+        help = new Node("*");
+        help->left = new Node("*");
+        help->left->left = new Node("-1");
+        help->right = new Node("sin");
+        help->right->left = n->left;
+        diff(n->left);
+        help->left->right = n->left;
+        delete_node(n);
+        n = help;
+        delete_node(help);
+    }
+    else if(n->str_rep=="sin"){
+        help = new Node("*");
+        help->right = new Node("cos");
+        help->right->left = n->left;
+        diff(n->left);
+        help->left = n->left;
+        delete_node(n);
+        n = help;
+        delete_node(help);
+    }
+    else if(n->is_binary_op()){
+        if(n->is_power()){
+            if(n->right->is_value()&&!n->right->is_x()){
+                help = new Node("*");
+                help->left = new Node(n->right->str_rep);
+                help->right = n;
+                delete_node(help->right->right);
+                help->right->right = new Node("-");
+                help->right->right->left = new Node(n->right->str_rep);
+                help->right->right->left = new Node("1");
+                delete_node(n);
+                n = help;
+                delete_node(help);
+            }
+        }
+        if(n->is_add()){
+            diff(n->left);
+            diff(n->right);
+        }
+        if(n->is_times()){
+            help = new Node("+");
+            help->left = new Node("*");
+            help->right = new Node("*");
+            help->left->right = n->right;
+            help->right->left = n->left;
+            diff(n->left);
+            diff(n->right);
+            help->left->left = n->left;
+            help->right->right = n->right;
+            delete_node(n);
+            n = help;
+            delete_node(help);
+        }
+        if(n->is_div()){
+            help = new Node("/");
+            help->right = new Node("*");
+            help->right->left = n->right;
+            help->right->right = n->right;
+            
+            help->left = new Node("-");
+            help->left->left = new Node("*");
+            help->left->right = new Node("*");
+            help->left->left->right = n->right;
+            help->left->right->left = n->left;
+            diff(n->left);
+            diff(n->right);
+            help->left->left->left = n->left;
+            help->left->right->right = n->right;
+            delete_node(n);
+            n = help;
+            delete_node(help);
+        }
+    }
+}
 
 // Takes an input string and converts to a command,
 // return true if the command is 'end'. Otherwise return false.

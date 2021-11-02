@@ -25,9 +25,14 @@ class Node{
         Node(string str);
         // ~Node();
         bool is_value();
+        bool x;
+        bool is_x();
         bool is_binary_op();
         bool is_trig();
+        bool is_add();
+        bool is_times();
         bool is_div();
+        bool is_power();
         bool is_unknown();
         bool needs_brackets();
         void print_node();
@@ -44,6 +49,7 @@ class Node{
 Node::Node(){
     left = nullptr;
     right = nullptr;
+    x = false;
 }
 
 // Node::~Node(){
@@ -56,7 +62,8 @@ Node::Node(){
 Node::Node(string str){
     left = nullptr;
     right = nullptr;
-
+    x = false;
+    
     str_rep = str;
     if (str == "-") {oper = MINUS;}
     else if (str == "+") {oper = PLUS;}
@@ -65,7 +72,13 @@ Node::Node(string str){
     else if (str == "^") {oper = POWER;}
     else if (str == "sin") {oper = SIN;}
     else if (str == "cos") {oper = COS;}
-    else if (is_alpha(str)) {oper = VAR; var.variable = str[0];}
+    else if (is_alpha(str)) {
+        oper = VAR; 
+        var.variable = str[0];
+        if(str=="x"){
+            x = true;
+        }
+    }
     else if (is_number(str)) {oper = NUM; var.number = stod(str);}
     else {oper = UNKNOWN; str_rep = '?';}       // used for bad input,
                                                 // treated as variable
@@ -75,10 +88,12 @@ Node::Node(string str){
 bool Node::is_value(){
     return ( (oper == VAR) | (oper == NUM) );
 }
-
+bool Node::is_x(){
+    return (x);
+}
 // Check whether the node is a binary operator (+, -, x, /, ^).
 bool Node::is_binary_op(){
-    return ( (oper != NUM) && (oper!=VAR) &&
+    return ( !is_value() &&
              !is_trig() && (oper != UNKNOWN));
 }
 
@@ -95,6 +110,18 @@ bool Node::is_trig(){
 // Check whether the node is a division character.
 bool Node::is_div(){
     return (oper == DIVIDE);
+}
+// Check whether the node is a plus character.
+bool Node::is_add(){
+    return (oper == PLUS);
+}
+// Check whether the node is a times character.
+bool Node::is_times(){
+    return (oper == MULTIPLY);
+}
+// Check whether the node is a times character.
+bool Node::is_power(){
+    return (oper == POWER);
 }
 
 // Check whether the operator needs brackets (plus or minus)
