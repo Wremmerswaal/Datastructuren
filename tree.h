@@ -31,7 +31,8 @@ class Tree{
     public:
         Tree();
         ~Tree();
-        void read();
+        bool is_empty();
+        bool read();
         Node* make_tree(istringstream &is);
         void delete_node(Node* n);
         void delete_tree();
@@ -52,6 +53,10 @@ Tree::Tree(){
 Tree::~Tree(){
     delete_tree();
     root = nullptr;
+}
+
+bool Tree::is_empty(){
+    return root == nullptr;
 }
 
 // Deletes the tree starting at node 'n'.
@@ -269,9 +274,11 @@ void Tree::print_tree(Node*n){
 }
 
 // Gets the line for the expression and makes the tree.
-void Tree::read(){
+bool Tree::read(){
     string line;
     string str;
+    tree_impossible = false;
+
     getline(cin, line);
     
     istringstream is(line);
@@ -279,9 +286,13 @@ void Tree::read(){
     delete_tree();
 
     root = make_tree(is);
+
     if (tree_impossible || (is >> str)){
+        cout << "INVALID INPUT" << endl;
         delete_tree();
+        return false;
     }
+    return true;
 }
 
 Node* Tree::simp(Node* n){
@@ -290,6 +301,7 @@ Node* Tree::simp(Node* n){
         n -> left = simp(n -> left);
     }
 
+    // KEEP
     if (n -> is_trig()) {               // if the node is a trigonometric function,
                                         // it can immediately be simplified
         if (n -> left -> is_number()){
@@ -304,20 +316,25 @@ Node* Tree::simp(Node* n){
             delete_node(n -> left);
             delete_node(n -> right);
             n -> set_zero();
+            return n;
         }
         else {                                  // result is the right node
+            Node* temp = n -> right;
             delete_node(n -> left);
-            n = n -> right;
+            delete n;
+            n = nullptr;
+            return temp;
         }
-        return n;
     }
 
     // Simplification of tree if left leaf is 1.
     else if (n -> left -> is_one()){
         if (n -> left -> is_times()){            // result is the right node
+            Node* temp = n -> right;
             delete_node(n -> left);
-            n = n -> right;
-            return n;
+            delete n;
+            n = nullptr;
+            return temp;
         }
         else if (n -> left -> is_power()){        // result is 1
             delete_node(n -> right);
@@ -334,8 +351,11 @@ Node* Tree::simp(Node* n){
     // Simplification of tree if right leaf is 0.
     if (n -> right -> is_zero()){
         if (n -> is_addmin()){
+            Node* temp = n -> left;
             delete_node(n -> right);
-            n = n -> left;
+            delete n;
+            n = nullptr;
+            return temp;
         }
         else if ( (n -> is_power()) | n -> is_times()){
             delete_node(n -> left);
@@ -350,12 +370,12 @@ Node* Tree::simp(Node* n){
     // Simplification of tree if right leaf is 1.
     else if (n -> right -> is_one()){
         if ( !(n -> is_addmin()) ){
+            Node* temp = n -> left;
             delete_node(n -> right);
-            n = n -> left;
-            return n;
+            delete n;
+            return temp;
         }
     }
-
     if (n -> left -> is_number() && n -> right -> is_number()){
         n -> calc_binary();
     }
@@ -392,13 +412,18 @@ bool Tree::menu(string in){
         return 0;
     }
     else if (in == "print"){
+        if (is_empty()){
+            cout << "EMPTY TREE" << endl;
+            return 0;
+        }
         bracketed = true;
         print_tree(root);
         cout << endl;
         return 0;
     }
     else if(in == "dot"){
-        if (root == nullptr){
+        if (is_empty()){
+            cout << "EMPTY TREE" << endl;
             return 0;
         }
 
@@ -416,6 +441,10 @@ bool Tree::menu(string in){
         return 0;
     }
     else if(in == "simp"){
+        if (is_empty()){
+            cout << "EMPTY TREE" << endl;
+            return 0;
+        }
         if ( (root == nullptr) | (root -> is_value()) | 
              (root -> is_unknown() ) ){
             return 0;
